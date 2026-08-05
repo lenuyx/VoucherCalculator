@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>voucher Rechner</title>
+<title>Voucher Rechner</title>
 <style>
 body {
 font-family: sans-serif;
@@ -15,7 +15,7 @@ background: white;
 padding: 20px;
 border-radius: 12px;
 box-shadow: 0 0 10px rgba(0,0,0,0.1);
-max-width: 400px;
+max-width: 450px;
 margin: auto;
 }
 input {
@@ -26,17 +26,7 @@ border-radius: 8px;
 border: 1px solid #ccc;
 font-size: 18px;
 }
-.tip-buttons button {
-width: 30%;
-padding: 10px;
-margin: 5px 1%;
-background: #444;
-color: white;
-border: none;
-border-radius: 8px;
-font-size: 16px;
-}
-button.calculate {
+button {
 width: 100%;
 padding: 14px;
 margin-top: 20px;
@@ -46,66 +36,86 @@ border: none;
 border-radius: 8px;
 font-size: 20px;
 }
-#result {
-margin-top: 20px;
-font-size: 18px;
-background: #eef;
-padding: 15px;
+.case {
+background: white;
+padding: 12px;
+margin-top: 12px;
 border-radius: 8px;
+border: 1px solid #ddd;
+font-size: 16px;
 }
 </style>
 </head>
 <body>
 
 <div class="box">
-<h2>Restaurantgutschein Rechner</h2>
+<h2>Voucher Restaurant Rechner</h2>
 
-<label>Wert (€):</label>
+<label>Voucher Wert (€):</label>
 <input id="voucherValue" type="number" step="0.01">
 
 <label>Rechnung (€):</label>
 <input id="bill" type="number" step="0.01">
 
-<div class="tip-buttons">
-<button onclick="setTip(0.05)">+5%</button>
-<button onclick="setTip(0.10)">+10%</button>
-<button onclick="setTip(0.15)">+15%</button>
-</div>
+<button onclick="calculate()">Berechnen</button>
 
-<button class="calculate" onclick="calculate()">Berechnen</button>
-
-<div id="result"></div>
+<div id="results"></div>
 </div>
 
 <script>
-let tipPercent = 0;
-
 const voucherInput = document.getElementById("voucherValue");
 voucherInput.value = localStorage.getItem("voucherValue") || "7.67";
 
-function setTip(percent) {
-tipPercent = percent;
+function roundEuro(value) {
+return Math.ceil(value);
 }
 
 function calculate() {
-const voucherValue = parseFloat(voucherInput.value);
+const voucher = parseFloat(voucherInput.value);
 const bill = parseFloat(document.getElementById("bill").value);
 
-localStorage.setItem("voucherValue", voucherValue);
+localStorage.setItem("voucherValue", voucher);
 
-const tip = bill * tipPercent;
-const total = bill + tip;
+const results = document.getElementById("results");
+results.innerHTML = "";
 
-const vouchersNeeded = Math.floor(total / voucherValue);
-const rest = (total - vouchersNeeded * voucherValue).toFixed(2);
+if (isNaN(voucher) || isNaN(bill) || voucher <= 0 || bill <= 0) {
+results.innerHTML = "<div class=\"case\">Bitte gültige Werte eingeben.</div>";
+return;
+}
 
-document.getElementById("result").innerHTML =
-"Ergebnis:<br>" +
-"Rechnung: " + bill.toFixed(2) + " €<br>" +
-"Trinkgeld: " + tip.toFixed(2) + " €<br>" +
-"Gesamt: " + total.toFixed(2) + " €<br>" +
-"vouchers einsetzbar: " + vouchersNeeded + "<br>" +
-"Restbetrag: " + rest + " €";
+// Fall 1: Minimumzahlung
+const vouchersMin = Math.floor(bill / voucher);
+const voucherSumMin = vouchersMin * voucher;
+const restMinRaw = bill - voucherSumMin;
+const restMin = roundEuro(restMinRaw);
+const tipMin = restMin - restMinRaw;
+const tipMinPercent = (tipMin / bill * 100).toFixed(1);
+
+const case1 = <div class="case"> <strong>Fall 1 – Minimumzahlung</strong><br> ${vouchersMin} Voucher + ${restMin} €<br> Trinkgeld: ${tipMin.toFixed(2)} € (${tipMinPercent}%) </div>;
+results.innerHTML += case1;
+
+// Fall 2: ca. 10% Trinkgeld
+const targetTip = bill * 0.10;
+const targetEnd = roundEuro(bill + targetTip);
+
+const vouchers10 = Math.floor(targetEnd / voucher);
+const voucherSum10 = vouchers10 * voucher;
+const rest10 = roundEuro(targetEnd - voucherSum10);
+const tip10 = targetEnd - bill;
+const tip10Percent = (tip10 / bill * 100).toFixed(1);
+
+const case2 = <div class="case"> <strong>Fall 2 – ca. 10% Trinkgeld</strong><br> ${vouchers10} Voucher + ${rest10} €<br> Trinkgeld: ${tip10.toFixed(2)} € (${tip10Percent}%) </div>;
+results.innerHTML += case2;
+
+// Fall 3: Überzahlung mit Voucher
+const vouchersOver = vouchersMin + 1;
+const voucherSumOver = vouchersOver * voucher;
+const tipOver = voucherSumOver - bill;
+const tipOverPercent = (tipOver / bill * 100).toFixed(1);
+
+const case3 = <div class="case"> <strong>Fall 3 – Überzahlung mit Voucher</strong><br> ${vouchersOver} Voucher<br> Trinkgeld: ${tipOver.toFixed(2)} € (${tipOverPercent}%) </div>;
+results.innerHTML += case3;
 }
 </script>
 
