@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Voucher Rechner</title>
+<title>Voucher Calculator</title>
 <style>
     body {
         font-family: sans-serif;
@@ -11,145 +11,149 @@
         background: #f5f5f5;
     }
     .box {
-        background: #ffffff;
-        padding: 16px;
+        background: white;
+        padding: 18px;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
         max-width: 420px;
-        margin: 0 auto;
+        margin: auto;
     }
     h2 {
         margin-top: 0;
-        font-size: 20px;
+        font-size: 22px;
     }
     label {
         display: block;
         margin-top: 12px;
-        font-size: 14px;
+        font-size: 15px;
     }
     input {
         width: 100%;
-        padding: 10px;
+        padding: 12px;
         margin-top: 6px;
         border-radius: 8px;
         border: 1px solid #ccc;
-        font-size: 18px;
+        font-size: 20px;
         box-sizing: border-box;
     }
     button {
         width: 100%;
-        padding: 12px;
+        padding: 14px;
         margin-top: 18px;
         background: #0078ff;
-        color: #ffffff;
+        color: white;
         border: none;
         border-radius: 8px;
-        font-size: 18px;
+        font-size: 20px;
     }
     #results {
         margin-top: 18px;
     }
     .case {
         background: #ffffff;
-        padding: 10px;
-        margin-top: 10px;
+        padding: 12px;
+        margin-top: 12px;
         border-radius: 8px;
         border: 1px solid #ddd;
-        font-size: 15px;
+        font-size: 16px;
     }
     .case strong {
         display: block;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
+        font-size: 17px;
     }
 </style>
 </head>
 <body>
 
 <div class="box">
-    <h2>Voucher Restaurant Rechner</h2>
+    <h2>Voucher Restaurant Calculator</h2>
 
-    <label>Voucher Wert (€):</label>
+    <label>Voucher Value (€):</label>
     <input id="voucherValue" type="text" inputmode="decimal">
 
-    <label>Rechnung (€):</label>
+    <label>Bill (€):</label>
     <input id="bill" type="text" inputmode="decimal">
 
-    <button onclick="calculate()">Berechnen</button>
+    <button onclick="calculate()">Calculate</button>
 
     <div id="results"></div>
 </div>
 
 <script>
-    // Voucher-Wert aus LocalStorage laden
     const voucherInput = document.getElementById("voucherValue");
     const storedVoucher = localStorage.getItem("voucherValue");
     voucherInput.value = storedVoucher ? storedVoucher : "7.67";
 
-    function roundEuro(value) {
+    function toNumber(value) {
+        if (!value) return NaN;
+        return parseFloat(String(value).replace(",", "."));
+    }
+
+    function roundUpEuro(value) {
         return Math.ceil(value);
     }
 
-    function parseNumber(str) {
-        if (!str) return NaN;
-        str = str.replace(",", "."); // Komma in Punkt umwandeln
-        return parseFloat(str);
-    }
-
     function calculate() {
-        const voucher = parseNumber(document.getElementById("voucherValue").value);
-        const bill = parseNumber(document.getElementById("bill").value);
+        const voucher = toNumber(document.getElementById("voucherValue").value);
+        const bill = toNumber(document.getElementById("bill").value);
 
         const results = document.getElementById("results");
         results.innerHTML = "";
 
         if (isNaN(voucher) || isNaN(bill) || voucher <= 0 || bill <= 0) {
-            results.innerHTML = "<div class='case'>Bitte gültige Zahlen eingeben (z.B. 17.8 oder 17,8).</div>";
+            results.innerHTML = "<div class='case'>Please enter valid numbers.</div>";
             return;
         }
 
-        // Voucher-Wert speichern
-        localStorage.setItem("voucherValue", voucher.toString());
+        localStorage.setItem("voucherValue", voucher);
 
-        // Fall 1: Minimumzahlung
+        // === FALL 1: Minimum Payment ===
         const vouchersMin = Math.floor(bill / voucher);
         const voucherSumMin = vouchersMin * voucher;
         const restMinRaw = bill - voucherSumMin;
-        const restMin = roundEuro(restMinRaw);
+        const restMin = roundUpEuro(restMinRaw);
         const tipMin = restMin - restMinRaw;
-        const tipMinPercent = (tipMin / bill * 100);
+        const tipMinPercent = (tipMin / bill * 100).toFixed(1);
 
         let case1 = "<div class='case'>";
-        case1 += "<strong>Fall 1 – Minimumzahlung</strong>";
-        case1 += vouchersMin + " Voucher + " + restMin.toFixed(0) + " €<br>";
-        case1 += "Trinkgeld: " + tipMin.toFixed(2) + " € (" + tipMinPercent.toFixed(1) + "%)";
+        case1 += "<strong>Case 1 – Minimum Payment</strong>";
+        case1 += "Voucher count: " + vouchersMin + "<br>";
+        case1 += "Voucher total: €" + voucherSumMin.toFixed(2) + "<br>";
+        case1 += "Cash to pay: €" + restMin.toFixed(0) + "<br>";
+        case1 += "Tip: €" + tipMin.toFixed(2) + " (" + tipMinPercent + "%)";
         case1 += "</div>";
         results.innerHTML += case1;
 
-        // Fall 2: ca. 10% Trinkgeld (gleiche Voucher-Anzahl wie Fall 1)
+        // === FALL 2: ~10% Tip ===
         const targetTip = bill * 0.10;
-        const targetEnd = roundEuro(bill + targetTip);
+        const targetEnd = roundUpEuro(bill + targetTip);
         const rest10Raw = targetEnd - voucherSumMin;
-        const rest10 = roundEuro(rest10Raw);
+        const rest10 = roundUpEuro(rest10Raw < 0 ? 0 : rest10Raw);
         const tip10 = targetEnd - bill;
-        const tip10Percent = (tip10 / bill * 100);
+        const tip10Percent = (tip10 / bill * 100).toFixed(1);
 
         let case2 = "<div class='case'>";
-        case2 += "<strong>Fall 2 – ca. 10% Trinkgeld</strong>";
-        case2 += vouchersMin + " Voucher + " + rest10.toFixed(0) + " €<br>";
-        case2 += "Trinkgeld: " + tip10.toFixed(2) + " € (" + tip10Percent.toFixed(1) + "%)";
+        case2 += "<strong>Case 2 – ~10% Tip</strong>";
+        case2 += "Voucher count: " + vouchersMin + "<br>";
+        case2 += "Voucher total: €" + voucherSumMin.toFixed(2) + "<br>";
+        case2 += "Cash to pay: €" + rest10.toFixed(0) + "<br>";
+        case2 += "Tip: €" + tip10.toFixed(2) + " (" + tip10Percent + "%)";
         case2 += "</div>";
         results.innerHTML += case2;
 
-        // Fall 3: Überzahlung mit Voucher (ein Voucher mehr)
+        // === FALL 3: Overpay with Voucher ===
         const vouchersOver = vouchersMin + 1;
         const voucherSumOver = vouchersOver * voucher;
         const tipOver = voucherSumOver - bill;
-        const tipOverPercent = (tipOver / bill * 100);
+        const tipOverPercent = (tipOver / bill * 100).toFixed(1);
 
         let case3 = "<div class='case'>";
-        case3 += "<strong>Fall 3 – Überzahlung mit Voucher</strong>";
-        case3 += vouchersOver + " Voucher<br>";
-        case3 += "Trinkgeld: " + tipOver.toFixed(2) + " € (" + tipOverPercent.toFixed(1) + "%)";
+        case3 += "<strong>Case 3 – Overpay with Voucher</strong>";
+        case3 += "Voucher count: " + vouchersOver + "<br>";
+        case3 += "Voucher total: €" + voucherSumOver.toFixed(2) + "<br>";
+        case3 += "Cash to pay: €0<br>";
+        case3 += "Tip: €" + tipOver.toFixed(2) + " (" + tipOverPercent + "%)";
         case3 += "</div>";
         results.innerHTML += case3;
     }
