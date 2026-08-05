@@ -80,7 +80,7 @@ const results = document.getElementById("results");
 results.innerHTML = "";
 
 if (isNaN(voucher) || isNaN(bill) || voucher <= 0 || bill <= 0) {
-results.innerHTML = "<div class=\"case\">Bitte gültige Werte eingeben.</div>";
+results.innerHTML = "<div class='case'>Bitte gültige Werte eingeben.</div>";
 return;
 }
 
@@ -95,17 +95,16 @@ const tipMinPercent = (tipMin / bill * 100).toFixed(1);
 const case1 = <div class="case"> <strong>Fall 1 – Minimumzahlung</strong><br> ${vouchersMin} Voucher + ${restMin} €<br> Trinkgeld: ${tipMin.toFixed(2)} € (${tipMinPercent}%) </div>;
 results.innerHTML += case1;
 
-// Fall 2: ca. 10% Trinkgeld
+// Fall 2: ca. 10% Trinkgeld (gleiche Voucher-Anzahl wie Fall 1)
 const targetTip = bill * 0.10;
 const targetEnd = roundEuro(bill + targetTip);
 
-const vouchers10 = Math.floor(targetEnd / voucher);
-const voucherSum10 = vouchers10 * voucher;
-const rest10 = roundEuro(targetEnd - voucherSum10);
+const rest10Raw = targetEnd - voucherSumMin;
+const rest10 = roundEuro(rest10Raw);
 const tip10 = targetEnd - bill;
 const tip10Percent = (tip10 / bill * 100).toFixed(1);
 
-const case2 = <div class="case"> <strong>Fall 2 – ca. 10% Trinkgeld</strong><br> ${vouchers10} Voucher + ${rest10} €<br> Trinkgeld: ${tip10.toFixed(2)} € (${tip10Percent}%) </div>;
+const case2 = <div class="case"> <strong>Fall 2 – ca. 10% Trinkgeld</strong><br> ${vouchersMin} Voucher + ${rest10} €<br> Trinkgeld: ${tip10.toFixed(2)} € (${tip10Percent}%) </div>;
 results.innerHTML += case2;
 
 // Fall 3: Überzahlung mit Voucher
