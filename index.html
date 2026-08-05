@@ -62,6 +62,11 @@
         margin-bottom: 6px;
         font-size: 17px;
     }
+    .footnote {
+        margin-top: 12px;
+        font-size: 13px;
+        color: #666;
+    }
 </style>
 </head>
 <body>
@@ -78,6 +83,9 @@
     <button onclick="calculate()">Calculate</button>
 
     <div id="results"></div>
+    <div class="footnote">
+        Note: All additional payment (cash) is calculated and shown in full euro amounts (no cents).
+    </div>
 </div>
 
 <script>
@@ -108,7 +116,7 @@
 
         localStorage.setItem("voucherValue", voucher);
 
-        // === FALL 1: Minimum Payment ===
+        // === Case 1: Minimum Payment ===
         const vouchersMin = Math.floor(bill / voucher);
         const voucherSumMin = vouchersMin * voucher;
         const restMinRaw = bill - voucherSumMin;
@@ -125,7 +133,7 @@
         case1 += "</div>";
         results.innerHTML += case1;
 
-        // === FALL 2: ~10% Tip ===
+        // === Case 2: ~10% Tip ===
         const targetTip = bill * 0.10;
         const targetEnd = roundUpEuro(bill + targetTip);
         const rest10Raw = targetEnd - voucherSumMin;
@@ -142,7 +150,7 @@
         case2 += "</div>";
         results.innerHTML += case2;
 
-        // === FALL 3: Overpay with Voucher ===
+        // === Case 3: Overpay with Voucher ===
         const vouchersOver = vouchersMin + 1;
         const voucherSumOver = vouchersOver * voucher;
         const tipOver = voucherSumOver - bill;
