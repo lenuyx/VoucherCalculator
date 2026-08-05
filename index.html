@@ -135,24 +135,35 @@
         results.innerHTML += case1;
 
         // === Case 2: Smart ~10% Tip ===
-        let bestCash = restMin;
-        let bestTipPercent = tipMinPercent;
+        let bestCash = null;
+        let bestTipPercent = null;
 
-        for (let cash = restMin; cash <= restMin + 10; cash++) {
+        // Start ABOVE minimum cash
+        for (let cash = restMin + 1; cash <= restMin + 15; cash++) {
             const total = voucherSumMin + cash;
             const tip = total - bill;
             const tipPercent = (tip / bill * 100);
 
+            // Perfect range: 7%–13%
             if (tipPercent >= 7 && tipPercent <= 13) {
                 bestCash = cash;
                 bestTipPercent = tipPercent.toFixed(1);
                 break;
             }
 
+            // Track best value below 7% if no perfect match found
             if (tipPercent < 7) {
                 bestCash = cash;
                 bestTipPercent = tipPercent.toFixed(1);
             }
+        }
+
+        // Fallback: if nothing found, use minCash + 1
+        if (bestCash === null) {
+            bestCash = restMin + 1;
+            const total = voucherSumMin + bestCash;
+            const tip = total - bill;
+            bestTipPercent = (tip / bill * 100).toFixed(1);
         }
 
         const bestTotal = voucherSumMin + bestCash;
