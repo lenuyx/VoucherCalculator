@@ -83,6 +83,7 @@
     <button onclick="calculate()">Calculate</button>
 
     <div id="results"></div>
+
     <div class="footnote">
         Note: All additional payment (cash) is calculated and shown in full euro amounts (no cents).
     </div>
@@ -133,20 +134,36 @@
         case1 += "</div>";
         results.innerHTML += case1;
 
-        // === Case 2: ~10% Tip ===
-        const targetTip = bill * 0.10;
-        const targetEnd = roundUpEuro(bill + targetTip);
-        const rest10Raw = targetEnd - voucherSumMin;
-        const rest10 = roundUpEuro(rest10Raw < 0 ? 0 : rest10Raw);
-        const tip10 = targetEnd - bill;
-        const tip10Percent = (tip10 / bill * 100).toFixed(1);
+        // === Case 2: Smart ~10% Tip ===
+        let bestCash = restMin;
+        let bestTipPercent = tipMinPercent;
+
+        for (let cash = restMin; cash <= restMin + 10; cash++) {
+            const total = voucherSumMin + cash;
+            const tip = total - bill;
+            const tipPercent = (tip / bill * 100);
+
+            if (tipPercent >= 7 && tipPercent <= 13) {
+                bestCash = cash;
+                bestTipPercent = tipPercent.toFixed(1);
+                break;
+            }
+
+            if (tipPercent < 7) {
+                bestCash = cash;
+                bestTipPercent = tipPercent.toFixed(1);
+            }
+        }
+
+        const bestTotal = voucherSumMin + bestCash;
+        const bestTip = bestTotal - bill;
 
         let case2 = "<div class='case'>";
-        case2 += "<strong>~10% Tip</strong>";
+        case2 += "<strong>~10% Tip (Smart)</strong>";
         case2 += "Voucher count: " + vouchersMin + "<br>";
         case2 += "Voucher total: €" + voucherSumMin.toFixed(2) + "<br>";
-        case2 += "Cash to pay: €" + rest10.toFixed(0) + "<br>";
-        case2 += "Tip: €" + tip10.toFixed(2) + " (" + tip10Percent + "%)";
+        case2 += "Cash to pay: €" + bestCash + "<br>";
+        case2 += "Tip: €" + bestTip.toFixed(2) + " (" + bestTipPercent + "%)";
         case2 += "</div>";
         results.innerHTML += case2;
 
